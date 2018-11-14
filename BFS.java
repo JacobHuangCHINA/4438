@@ -19,9 +19,8 @@ public class BFS extends Algorithm {
 
             Vector<String> adjacent = neighbours(); // Set of neighbours of this node
             Integer sum_children = 0;
-            if (isRoot()) { // the leaf node send mssg to parent
-                mssg = makeMessage(getParent(), pack(0,0)); // with message sum of the distance to child and the number of child
-              
+            if (!isRoot()) { // the leaf node send mssg to parent
+                mssg = makeMessage(getParent(), pack(numChildren(),numChildren())); // with message sum of the distance to child and the number of child
             }
             else { // If processor is the root node.
                 mssg = null;
