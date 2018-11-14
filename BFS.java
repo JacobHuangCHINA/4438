@@ -14,55 +14,53 @@ public class BFS extends Algorithm {
             String parent;               // Parent and children of this node in the BFS tree
             Vector<String> children = new Vector<String>();
             String[] data;               // Data to place in each message
+            Integer sum = 0;
+            Integer distance = 0;
 
             Vector<String> adjacent = neighbours(); // Set of neighbours of this node
             Integer sum_children = 0;
-            if (isRoot()) { // The root node will send messages in the first round.
-                mssg = makeMessage(adjacent, pack(id,"?")); // Request for adoption to all neighbours.
-                parent = "";                                // No parent
+            if (isRoot()) { // the leaf node send mssg to parent
+                mssg = makeMessage(getParent(), pack(0,0)); // with message sum of the distance to child and the number of child
+              
             }
-            else { // If processor is not the root node.
+            else { // If processor is the root node.
                 mssg = null;
-                parent = "unknown";
+             
             }
             ack = null;
             int rounds_left = -1;
 
             while (waitForNextRound()) {  
-                if (mssg != null) {
-                	send(mssg);      // Send requests for adoption to all neighbours
-                	rounds_left = 1; // Wait two rounds to get responses to requests
+                if (!isRoot()) {
+                	send(mssg);      // Send requests to the parent
+                    round_left = 1;
                 }
-                if (ack != null) send(ack); // Send acknowledgement to parent
+                if(isRoot()){
+                    round_left = 1;
+                }
                 mssg = null;
-                ack = null;
 
                 message = receive();
                 while (message != null) {
-                	data = unpack(message.data());       // Get the data from the message
-                	if (data[1].equals("?")) {           // Request for adoption
-                		if (equal(parent, "unknown")) {  // Parent not set yet
-                			parent = data[0];
-                			adjacent.remove(parent);     // Requests for adoption will not be sent to parent
-                            mssg = makeMessage(adjacent, pack(id,"?")); // Sent own adoption requests to neighbours
-                            ack = makeMessage(parent, pack(id,"Y"));    // Agree to be child of parent
-                		}
-                		else adjacent.remove(data[0]); // Important: Do not send request for adoption to processors
-                                                       // that have sent to this processor am adoption request.
-                	}
-                	else if (data[1].equals("Y")) {    // Neighbour agreed to be child of this processor
-                		children.add(data[0]);
-                		sum_children += children.size()+1;}
-                    	message = receive();
+                    data = unpack(message.data());
+                    distance = data[0] + numChildren();
+                    mssg = makeMessage(getParent(),pack(distance,numChildren()));
+                    
+                   	message = receive();
                 }
 
                 if (rounds_left == 0){  // Print partent, children, and then terminate
-                	String outMssg = Integer.toString(children.size());		
-                		
+                    if (isRoot()) {
+                        Integer result = distance + numChildren;
+                        String outMssg = Integer.toString(result);
                 		showMessage(outMssg);
                 		printMessage(outMssg);
-                		showMessage(Integer.toString(sum_children));
+                    }else{
+                        String outMssg = Integer.toString(distance);
+                		showMessage(outMssg);
+                		printMessage(outMssg);
                     	return "";
+                    }
                 } else if (rounds_left == 1) {
                     rounds_left = 0;
                 }
